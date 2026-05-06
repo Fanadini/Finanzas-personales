@@ -5,7 +5,7 @@ const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1FoOcahWHyY6bpG0YjFoqcRNVEHlMQI0n1sT3n94a7zc/pub?output=csv&gid=1253309126'
 
 const CACHE_KEY = 'expense_data_v1'
-const CACHE_TTL = 30 * 60 * 1000
+const CACHE_TTL = 0
 
 const MONTH_MAP = {
   january: 1, enero: 1,
