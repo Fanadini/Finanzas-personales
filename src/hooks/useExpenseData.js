@@ -66,8 +66,9 @@ function parseAmount(str) {
 function parseMonthHeader(header) {
   if (!header) return null
   const trimmed = header.trim()
+  // Handles both "RealMarzo24" and "Real Marzo 2026" (with or without spaces)
   const match = trimmed.match(
-    /^(Real|Estimado?|Estimated)\s+([A-Za-záéíóúüÁÉÍÓÚÜ]+)\s+(\d{2,4})$/i
+    /^(Real|Estimado?)\s*([A-Za-záéíóúüÁÉÍÓÚÜ]+)\s*(\d{2,4})$/i
   )
   if (!match) return null
 
@@ -84,6 +85,8 @@ function parseMonthHeader(header) {
 
   return { type, year, month: monthNum, key, label }
 }
+
+const SKIP_ROW_NAMES = /^(total|subtotal|suma|sum|promedio|ipc)$/i
 
 function processData(rows) {
   if (!rows?.length) throw new Error('Sin datos')
@@ -118,6 +121,7 @@ function processData(rows) {
     const row = rows[i]
     const name = row[0]?.trim()
     if (!name) continue
+    if (SKIP_ROW_NAMES.test(name)) continue
 
     const monthData = {}
     for (const mc of monthCols) {
