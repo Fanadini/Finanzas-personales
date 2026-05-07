@@ -181,23 +181,39 @@ export default function Dashboard({ data, onRefresh }) {
 
         {/* Rows */}
         <div className="divide-y divide-slate-50">
-          {sorted.map(e => (
-            <div key={e.name} className="flex items-center px-4 py-3">
-              <span className="text-sm text-slate-700 flex-1 truncate pr-3">{e.name}</span>
-              <div className="text-right flex-shrink-0">
-                <p className={`text-sm font-semibold ${
-                  e.estimated != null && e.real != null && e.real > e.estimated
-                    ? 'text-red-500'
-                    : 'text-slate-800'
-                }`}>
-                  {e.real != null ? formatARS(e.real) : '-'}
-                </p>
-                <p className="text-xs text-slate-400">
-                  {e.estimated != null ? `est. ${formatARS(e.estimated)}` : 'sin estimado'}
-                </p>
+          {sorted.map(e => {
+            const hasComparison = e.real != null && e.estimated != null && e.estimated !== 0
+            const diff = hasComparison ? e.real - e.estimated : null
+            const pct = hasComparison ? Math.round((diff / e.estimated) * 100) : null
+            const color = !hasComparison
+              ? 'text-slate-800'
+              : diff > 0 ? 'text-red-500'
+              : diff < 0 ? 'text-green-600'
+              : 'text-slate-800'
+
+            return (
+              <div key={e.name} className="flex items-center px-4 py-3">
+                <span className="text-sm text-slate-700 flex-1 truncate pr-3">{e.name}</span>
+                <div className="text-right flex-shrink-0">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <p className={`text-sm font-semibold ${color}`}>
+                      {e.real != null ? formatARS(e.real) : '-'}
+                    </p>
+                    {pct !== null && pct !== 0 && (
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                        diff > 0 ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
+                      }`}>
+                        {diff > 0 ? '+' : ''}{pct}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {e.estimated != null ? `est. ${formatARS(e.estimated)}` : 'sin estimado'}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {sorted.length === 0 && (
             <p className="text-sm text-slate-400 text-center py-8">Sin datos para este mes</p>
           )}
