@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { formatARS } from '../utils/format'
+import { formatARS, getCategory, CATEGORY_COLORS } from '../utils/format'
 import BarChart from './BarChart'
 import BalanzCard from './BalanzCard'
+import SankeyChart from './SankeyChart'
 
 function ChevronLeft() {
   return (
@@ -28,16 +29,17 @@ function SortIcon({ direction }) {
   )
 }
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
+function BulletBar({ real, estimated }) {
+  if (real == null || estimated == null || estimated === 0) return null
+  const pct = (real / estimated) * 100
+  const over = pct > 100
   return (
-    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-lg text-xs">
-      <p className="font-semibold text-slate-700 mb-1">{label}</p>
-      {payload.map(p => (
-        <p key={p.dataKey} style={{ color: p.fill }}>
-          {p.dataKey}: {formatARS(p.value)}
-        </p>
-      ))}
+    <div className="relative mt-1.5 h-1 rounded-full bg-warm-100" style={{ width: 72 }}>
+      <div
+        className={`absolute inset-y-0 left-0 h-full rounded-full ${over ? 'bg-gold-400' : 'bg-olive-400'}`}
+        style={{ width: `${Math.min(pct, 100)}%` }}
+      />
+      <div className="absolute inset-y-[-1px] w-px bg-warm-300" style={{ right: 0 }} />
     </div>
   )
 }
@@ -64,6 +66,16 @@ export default function Dashboard({ data, onRefresh }) {
     }))
     .filter(e => e.real != null || e.estimated != null)
 
+  const catMap = {}
+  monthExpenses.forEach(e => {
+    const cat = getCategory(e.name)
+    catMap[cat] = (catMap[cat] ?? 0) + (e.real ?? 0)
+  })
+  const sankeyData = Object.entries(catMap)
+    .filter(([, v]) => v > 0)
+    .map(([name, value]) => ({ name, value, color: CATEGORY_COLORS[name] ?? '#9A9080' }))
+    .sort((a, b) => b.value - a.value)
+
   const sorted = [...monthExpenses].sort((a, b) => {
     if (sortBy === 'real-desc') return (b.real ?? 0) - (a.real ?? 0)
     if (sortBy === 'real-asc') return (a.real ?? 0) - (b.real ?? 0)
@@ -77,63 +89,61 @@ export default function Dashboard({ data, onRefresh }) {
     const t = monthTotals[m.key]
     return {
       name: m.label.split(' ')[0].substring(0, 3),
-      Estimado: t?.estimated ?? 0,
-      Real: t?.real ?? 0,
+      Estimado: t?.estimated ?? null,
+      Real: t?.real ?? null,
     }
   })
+  const hasChartData = chartData.some(d => d.Real != null || d.Estimado != null)
 
-  const cycleSortAmount = () => {
-    setSortBy(s => s === 'real-desc' ? 'real-asc' : 'real-desc')
-  }
-  const cycleSortName = () => {
-    setSortBy(s => s === 'name-asc' ? 'name-desc' : 'name-asc')
-  }
+  const cycleSortAmount = () => setSortBy(s => s === 'real-desc' ? 'real-asc' : 'real-desc')
+  const cycleSortName = () => setSortBy(s => s === 'name-asc' ? 'name-desc' : 'name-asc')
 
   return (
     <div className="p-4 space-y-4 pb-24">
+
       <div className="flex items-center justify-between pt-2">
         <button
           onClick={() => setIdx(i => Math.max(0, i - 1))}
           disabled={idx === 0}
-          className="p-2 rounded-full bg-white shadow-sm text-slate-600 disabled:opacity-30 active:scale-95 transition-transform"
+          className="p-2 rounded-full bg-white shadow-sm text-olive-500 disabled:opacity-30 active:scale-95 transition-transform"
         >
           <ChevronLeft />
         </button>
         <div className="text-center">
-          <h1 className="text-xl font-bold text-slate-800">{month.label}</h1>
-          <p className="text-xs text-slate-400">Gastos del mes</p>
+          <h1 className="text-xl font-bold text-olive-800">{month.label}</h1>
+          <p className="text-xs text-warm-400">Gastos del mes</p>
         </div>
         <button
           onClick={() => setIdx(i => Math.min(months.length - 1, i + 1))}
           disabled={idx === months.length - 1}
-          className="p-2 rounded-full bg-white shadow-sm text-slate-600 disabled:opacity-30 active:scale-95 transition-transform"
+          className="p-2 rounded-full bg-white shadow-sm text-olive-500 disabled:opacity-30 active:scale-95 transition-transform"
         >
           <ChevronRight />
         </button>
       </div>
 
-      <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
-        <p className="text-indigo-200 text-sm mb-1">Total Real</p>
+      <div className="bg-gradient-to-br from-olive-500 to-olive-700 rounded-2xl p-5 text-white shadow-lg">
+        <p className="text-olive-200 text-sm mb-1">Total Real</p>
         <p className="text-4xl font-bold mb-4">
           {totals?.real != null ? formatARS(totals.real) : '-'}
         </p>
         {totals?.estimated != null && (
           <>
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-indigo-200">Estimado</span>
+              <span className="text-olive-200">Estimado</span>
               <span className="font-medium">{formatARS(totals.estimated)}</span>
             </div>
             {percentage != null && (
               <div>
-                <div className="flex justify-between text-xs text-indigo-200 mb-1">
+                <div className="flex justify-between text-xs text-olive-200 mb-1">
                   <span>{percentage}% del estimado</span>
-                  <span className={percentage > 100 ? 'text-red-300' : 'text-green-300'}>
+                  <span className={percentage > 100 ? 'text-gold-300' : 'text-green-300'}>
                     {percentage > 100 ? `+${percentage - 100}%` : `-${100 - percentage}%`}
                   </span>
                 </div>
-                <div className="h-2 bg-indigo-800 rounded-full overflow-hidden">
+                <div className="h-2 bg-olive-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${percentage > 100 ? 'bg-red-400' : 'bg-green-400'}`}
+                    className={`h-full rounded-full transition-all ${percentage > 100 ? 'bg-gold-400' : 'bg-green-400'}`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
                 </div>
@@ -143,16 +153,25 @@ export default function Dashboard({ data, onRefresh }) {
         )}
       </div>
 
+      {sankeyData.length > 0 && (
+        <div className="bg-white rounded-2xl px-4 pt-4 pb-2 shadow-sm">
+          <h2 className="text-xs font-semibold text-warm-400 uppercase tracking-wider mb-1">
+            Distribución por categoría
+          </h2>
+          <SankeyChart categories={sankeyData} />
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-warm-100">
+          <span className="text-xs font-semibold text-warm-400 uppercase tracking-wider">
             Servicios ({sorted.length})
           </span>
           <div className="flex gap-2">
             <button
               onClick={cycleSortName}
               className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                sortBy.startsWith('name') ? 'bg-indigo-50 text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'
+                sortBy.startsWith('name') ? 'bg-olive-50 text-olive-600 font-semibold' : 'text-warm-400 hover:text-olive-600'
               }`}
             >
               A-Z
@@ -161,7 +180,7 @@ export default function Dashboard({ data, onRefresh }) {
             <button
               onClick={cycleSortAmount}
               className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                sortBy.startsWith('real') ? 'bg-indigo-50 text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'
+                sortBy.startsWith('real') ? 'bg-olive-50 text-olive-600 font-semibold' : 'text-warm-400 hover:text-olive-600'
               }`}
             >
               $
@@ -170,57 +189,60 @@ export default function Dashboard({ data, onRefresh }) {
           </div>
         </div>
 
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-warm-50">
           {sorted.map(e => {
             const hasComparison = e.real != null && e.estimated != null && e.estimated !== 0
             const diff = hasComparison ? e.real - e.estimated : null
             const pct = hasComparison ? Math.round((diff / e.estimated) * 100) : null
-            const color = !hasComparison
-              ? 'text-slate-800'
-              : diff > 0 ? 'text-red-500'
-              : 'text-green-600'
+            const over = diff != null && diff > 0
+            const amountColor = !hasComparison
+              ? 'text-olive-700'
+              : over ? 'text-gold-500' : 'text-olive-600'
 
             return (
               <div key={e.name} className="flex items-center px-4 py-3">
-                <span className="text-sm text-slate-700 flex-1 truncate pr-3">{e.name}</span>
-                <div className="text-right flex-shrink-0">
+                <span className="text-sm text-olive-700 flex-1 truncate pr-3">{e.name}</span>
+                <div className="flex-shrink-0 text-right">
                   <div className="flex items-center justify-end gap-1.5">
-                    <p className={`text-sm font-semibold ${color}`}>
+                    <p className={`text-sm font-semibold ${amountColor}`}>
                       {e.real != null ? formatARS(e.real) : '-'}
                     </p>
                     {pct !== null && pct !== 0 && (
                       <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-                        diff > 0 ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
+                        over ? 'bg-gold-50 text-gold-600' : 'bg-olive-50 text-olive-600'
                       }`}>
-                        {diff > 0 ? '+' : ''}{pct}%
+                        {over ? '+' : ''}{pct}%
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-warm-400">
                     {e.estimated != null ? `est. ${formatARS(e.estimated)}` : 'sin estimado'}
                   </p>
+                  <BulletBar real={e.real} estimated={e.estimated} />
                 </div>
               </div>
             )
           })}
           {sorted.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-8">Sin datos para este mes</p>
+            <p className="text-sm text-warm-400 text-center py-8">Sin datos para este mes</p>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-          Últimos meses
-        </h2>
-        <BarChart data={chartData} />
-      </div>
+      {hasChartData && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-xs font-semibold text-warm-400 uppercase tracking-wider mb-3">
+            Últimos meses
+          </h2>
+          <BarChart data={chartData} />
+        </div>
+      )}
 
       <BalanzCard balanz={balanz} expenses={expenses} months={months} />
 
       <button
         onClick={onRefresh}
-        className="w-full py-3 text-sm text-slate-400 hover:text-indigo-600 transition-colors"
+        className="w-full py-3 text-sm text-warm-400 hover:text-olive-600 transition-colors"
       >
         Actualizar datos
       </button>

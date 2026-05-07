@@ -34,7 +34,7 @@ const TABS = [
 
 export default function NavBar({ activeTab, onTabChange }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50"
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-warm-200 z-50"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex">
         {TABS.map(({ label, Icon }, i) => (
@@ -42,7 +42,7 @@ export default function NavBar({ activeTab, onTabChange }) {
             key={i}
             onClick={() => onTabChange(i)}
             className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-colors ${
-              activeTab === i ? 'text-indigo-600' : 'text-slate-400'
+              activeTab === i ? 'text-olive-500' : 'text-warm-400'
             }`}
           >
             <Icon active={activeTab === i} />

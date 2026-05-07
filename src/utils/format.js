@@ -34,16 +34,16 @@ export function getCategory(name) {
 }
 
 export const CATEGORY_COLORS = {
-  Ahorro:                '#10b981',
-  Amanda:                '#f472b6',
-  Auto:                  '#6366f1',
-  Casa:                  '#f59e0b',
-  Comida:                '#84cc16',
-  'Cuidado Personal':    '#06b6d4',
-  Delivery:              '#fb923c',
-  Entretenimiento:       '#a78bfa',
-  'Impuestos y Servicios': '#3b82f6',
-  Otros:                 '#94a3b8',
-  Salidas:               '#f43f5e',
-  Tarjetas:              '#ef4444',
+  Ahorro:                  '#3E7D58',
+  Amanda:                  '#C47A8C',
+  Auto:                    '#5C7EA8',
+  Casa:                    '#B8914A',
+  Comida:                  '#6B9E6B',
+  'Cuidado Personal':      '#6B9DB0',
+  Delivery:                '#C07A5C',
+  Entretenimiento:         '#8A7AB0',
+  'Impuestos y Servicios': '#4A7A90',
+  Otros:                   '#9A9080',
+  Salidas:                 '#B85C72',
+  Tarjetas:                '#B85050',
 }

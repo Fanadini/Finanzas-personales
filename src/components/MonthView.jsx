@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatARS, getCategory, CATEGORY_COLORS } from '../utils/format'
+import Treemap from './Treemap'
 
 function DiffBadge({ real, estimated }) {
   if (real == null || estimated == null || estimated === 0) return null
@@ -8,7 +9,7 @@ function DiffBadge({ real, estimated }) {
   if (pct < 1) return null
   return (
     <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-      diff > 0 ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'
+      diff > 0 ? 'bg-gold-50 text-gold-600' : 'bg-olive-50 text-olive-600'
     }`}>
       {diff > 0 ? '+' : '-'}{pct}%
     </span>
@@ -24,18 +25,18 @@ function CategorySection({ category, items }) {
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 active:bg-slate-50"
+        className="w-full flex items-center justify-between px-4 py-3 active:bg-warm-50"
       >
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[category] }} />
-          <span className="text-sm font-semibold text-slate-700">{category}</span>
-          <span className="text-xs text-slate-400">({items.length})</span>
+          <span className="text-sm font-semibold text-olive-700">{category}</span>
+          <span className="text-xs text-warm-400">({items.length})</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-800">{formatARS(totalReal || totalEst)}</span>
+          <span className="text-sm font-bold text-olive-800">{formatARS(totalReal || totalEst)}</span>
           <svg
             viewBox="0 0 24 24"
-            className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-warm-400 transition-transform ${open ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" strokeWidth="2"
           >
             <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />
@@ -44,21 +45,21 @@ function CategorySection({ category, items }) {
       </button>
 
       {open && (
-        <div className="border-t border-slate-100">
+        <div className="border-t border-warm-100">
           {items.map(item => (
-            <div key={item.name} className="flex items-center px-4 py-2.5 border-b border-slate-50 last:border-0">
-              <span className="text-sm text-slate-600 flex-1 truncate pr-2">{item.name}</span>
+            <div key={item.name} className="flex items-center px-4 py-2.5 border-b border-warm-50 last:border-0">
+              <span className="text-sm text-olive-700 flex-1 truncate pr-2">{item.name}</span>
               <div className="text-right flex-shrink-0 flex items-center gap-2">
                 <DiffBadge real={item.real} estimated={item.estimated} />
                 <div>
                   <p className={`text-sm font-semibold ${
                     item.estimated != null && item.real != null && item.real > item.estimated
-                      ? 'text-red-500' : 'text-slate-800'
+                      ? 'text-gold-500' : 'text-olive-800'
                   }`}>
                     {item.real != null ? formatARS(item.real) : '-'}
                   </p>
                   {item.estimated != null && (
-                    <p className="text-xs text-slate-400">est. {formatARS(item.estimated)}</p>
+                    <p className="text-xs text-warm-400">est. {formatARS(item.estimated)}</p>
                   )}
                 </div>
               </div>
@@ -66,12 +67,12 @@ function CategorySection({ category, items }) {
           ))}
 
           {items.length > 1 && (
-            <div className="flex justify-between px-4 py-2 bg-slate-50">
-              <span className="text-xs font-semibold text-slate-500">Subtotal</span>
+            <div className="flex justify-between px-4 py-2 bg-warm-50">
+              <span className="text-xs font-semibold text-warm-400">Subtotal</span>
               <div className="text-right">
-                <span className="text-sm font-bold text-slate-700">{formatARS(totalReal)}</span>
+                <span className="text-sm font-bold text-olive-700">{formatARS(totalReal)}</span>
                 {totalEst > 0 && (
-                  <span className="text-xs text-slate-400 ml-2">/ {formatARS(totalEst)}</span>
+                  <span className="text-xs text-warm-400 ml-2">/ {formatARS(totalEst)}</span>
                 )}
               </div>
             </div>
@@ -111,25 +112,23 @@ export default function MonthView({ data }) {
     return sumB - sumA
   })
 
-  // Category breakdown for bar/% display — always show all 12 categories
-  const categoryBreakdown = Object.keys(CATEGORY_COLORS).sort().map(cat => {
-    const items = grouped[cat] ?? []
-    const val = items.reduce((s, i) => s + (i.real ?? 0), 0)
-    const est = items.reduce((s, i) => s + (i.estimated ?? 0), 0)
-    const pct = totalReal > 0 ? Math.round((val / totalReal) * 100) : 0
-    return { cat, val, est, pct }
-  }).sort((a, b) => b.val - a.val || b.est - a.est)
+  const treemapData = Object.entries(grouped)
+    .map(([cat, items]) => ({
+      name: cat,
+      value: items.reduce((s, i) => s + (i.real ?? 0), 0),
+      color: CATEGORY_COLORS[cat] ?? '#9A9080',
+    }))
+    .filter(d => d.value > 0)
 
   return (
     <div className="p-4 space-y-4 pb-24">
-      {/* Header */}
       <div className="pt-2">
-        <h1 className="text-xl font-bold text-slate-800 mb-3">Por Mes</h1>
+        <h1 className="text-xl font-bold text-olive-800 mb-3">Por Mes</h1>
         <select
           value={selectedKey}
           onChange={e => setSelectedKey(e.target.value)}
-          className="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-700 shadow-sm text-sm appearance-none"
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+          className="w-full p-3 bg-white border border-warm-200 rounded-xl text-olive-700 shadow-sm text-sm appearance-none"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8A88A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
         >
           {[...months].reverse().map(m => (
             <option key={m.key} value={m.key}>{m.label}</option>
@@ -137,69 +136,38 @@ export default function MonthView({ data }) {
         </select>
       </div>
 
-      {/* Totals */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-slate-400 mb-1">Real</p>
-          <p className="text-lg font-bold text-slate-800">{formatARS(totalReal)}</p>
+          <p className="text-xs text-warm-400 mb-1">Real</p>
+          <p className="text-lg font-bold text-olive-800">{formatARS(totalReal)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-slate-400 mb-1">Estimado</p>
-          <p className="text-lg font-bold text-slate-800">{formatARS(totalEst)}</p>
+          <p className="text-xs text-warm-400 mb-1">Estimado</p>
+          <p className="text-lg font-bold text-olive-800">{formatARS(totalEst)}</p>
           {totalEst > 0 && totalReal > 0 && (
-            <p className={`text-xs mt-0.5 font-medium ${totalReal > totalEst ? 'text-red-500' : 'text-green-500'}`}>
+            <p className={`text-xs mt-0.5 font-medium ${totalReal > totalEst ? 'text-gold-500' : 'text-olive-500'}`}>
               {totalReal > totalEst ? '+' : '-'}{Math.abs(Math.round((totalReal / totalEst - 1) * 100))}%
             </p>
           )}
         </div>
       </div>
 
-      {/* Category breakdown with bars */}
-      {categoryBreakdown.length > 0 && (
+      {treemapData.length > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          <h2 className="text-xs font-semibold text-warm-400 uppercase tracking-wider mb-3">
             Por categoría
           </h2>
-          <div className="space-y-2.5">
-            {categoryBreakdown.map(({ cat, val, est, pct }) => {
-              const hasData = val > 0 || est > 0
-              const display = val > 0 ? formatARS(val) : est > 0 ? `est. ${formatARS(est)}` : '-'
-              const barPct = val > 0 ? pct : 0
-              return (
-                <div key={cat} className={hasData ? '' : 'opacity-40'}>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] }} />
-                      <span className="text-sm text-slate-600 font-medium">{cat}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {val > 0 && <span className="text-xs text-slate-400">{pct}%</span>}
-                      <span className={`text-sm font-semibold ${val > 0 ? 'text-slate-800' : 'text-slate-400'}`}>
-                        {display}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${barPct}%`, backgroundColor: CATEGORY_COLORS[cat] }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <Treemap data={treemapData} height={190} />
         </div>
       )}
 
-      {/* Category Sections */}
       {sortedCategories.length > 0 ? (
         sortedCategories.map(([category, items]) => (
           <CategorySection key={category} category={category} items={items} />
         ))
       ) : (
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <p className="text-slate-400 text-sm">Sin datos para este mes</p>
+          <p className="text-warm-400 text-sm">Sin datos para este mes</p>
         </div>
       )}
     </div>
