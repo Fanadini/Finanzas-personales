@@ -216,7 +216,7 @@ export default function Dashboard({ data, onRefresh }) {
         <BarChart data={chartData} />
       </div>
 
-      <BalanzCard balanz={balanz} />
+      <BalanzCard balanz={balanz} expenses={expenses} months={months} />
 
       <button
         onClick={onRefresh}

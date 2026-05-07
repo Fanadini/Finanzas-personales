@@ -1,7 +1,20 @@
+import { useState } from 'react'
 import { formatARS } from '../utils/format'
 
-export default function BalanzCard({ balanz }) {
+function ChevronDown({ expanded }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export default function BalanzCard({ balanz, expenses, months }) {
+  const [expanded, setExpanded] = useState({})
+
   if (!balanz) return null
+
+  const toggle = label => setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -13,23 +26,61 @@ export default function BalanzCard({ balanz }) {
       </div>
 
       <div className="divide-y divide-slate-50">
-        {balanz.items.map(({ label, amount }) => (
-          <div key={label} className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-slate-600">{label}</span>
-            <span className={`text-sm font-semibold ${
-              amount == null ? 'text-slate-400'
-              : amount < 0 ? 'text-red-500'
-              : 'text-emerald-600'
-            }`}>
-              {amount != null ? formatARS(amount) : '-'}
-            </span>
-          </div>
-        ))}
+        {balanz.items.map(({ label, amount }) => {
+          const expense = expenses?.find(e => e.name.toLowerCase() === label.toLowerCase())
+          const isExpanded = expanded[label]
+          const monthHistory = expense && months
+            ? months
+                .map(m => ({ label: m.label, real: expense.monthData[m.key]?.real }))
+                .filter(d => d.real != null)
+                .reverse()
+            : []
+
+          return (
+            <div key={label}>
+              <button
+                onClick={() => expense && toggle(label)}
+                className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${expense ? 'active:bg-slate-50 cursor-pointer' : 'cursor-default'}`}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className={`flex-shrink-0 transition-colors ${expense ? 'text-slate-400' : 'text-transparent'}`}>
+                    <ChevronDown expanded={isExpanded} />
+                  </span>
+                  <span className="text-sm text-slate-600 truncate">{label}</span>
+                </div>
+                <span className={`text-sm font-semibold flex-shrink-0 ml-3 ${
+                  amount == null ? 'text-slate-400'
+                  : amount < 0 ? 'text-red-500'
+                  : 'text-slate-700'
+                }`}>
+                  {amount != null ? formatARS(amount) : '-'}
+                </span>
+              </button>
+
+              {isExpanded && (
+                <div className="bg-slate-50 border-t border-slate-100">
+                  {monthHistory.length > 0 ? (
+                    <div className="divide-y divide-slate-100">
+                      {monthHistory.map(d => (
+                        <div key={d.label} className="flex items-center justify-between px-6 py-2">
+                          <span className="text-xs text-slate-500">{d.label}</span>
+                          <span className="text-xs font-medium text-slate-700">{formatARS(d.real)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 text-center py-3">Sin datos</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-100">
-        <span className="text-sm font-semibold text-slate-700">Total gastado</span>
-        <span className="text-sm font-bold text-slate-800">{formatARS(balanz.total)}</span>
+      <div className="flex items-center justify-between px-4 py-3 bg-emerald-50 border-t border-emerald-100">
+        <span className="text-sm font-semibold text-emerald-700">Saldo en Balanz</span>
+        <span className="text-lg font-bold text-emerald-700">{formatARS(balanz.total)}</span>
       </div>
     </div>
   )
