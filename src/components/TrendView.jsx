@@ -1,23 +1,6 @@
 import { useState, useMemo } from 'react'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
-} from 'recharts'
-import { formatARS, formatARSShort, getCategory, CATEGORY_COLORS } from '../utils/format'
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-lg text-xs">
-      <p className="font-semibold text-slate-700 mb-1">{label}</p>
-      {payload.map(p => p.value != null && (
-        <p key={p.dataKey} style={{ color: p.stroke }}>
-          {p.dataKey}: {formatARS(p.value)}
-        </p>
-      ))}
-    </div>
-  )
-}
+import { formatARS, getCategory, CATEGORY_COLORS } from '../utils/format'
+import LineChart from './LineChart'
 
 export default function TrendView({ data }) {
   const { expenses, months } = data
@@ -53,7 +36,6 @@ export default function TrendView({ data }) {
     ? Math.round(((lastReal - prevReal) / prevReal) * 100)
     : null
 
-  // Group expenses by category for the selector
   const byCategory = {}
   expenses.forEach(e => {
     const cat = getCategory(e.name)
@@ -66,7 +48,6 @@ export default function TrendView({ data }) {
       <div className="pt-2">
         <h1 className="text-xl font-bold text-slate-800 mb-3">Tendencias</h1>
 
-        {/* Expense Selector */}
         <select
           value={selectedName}
           onChange={e => setSelectedName(e.target.value)}
@@ -83,7 +64,6 @@ export default function TrendView({ data }) {
         </select>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-xl p-3 shadow-sm">
           <p className="text-xs text-slate-400 mb-1">Último real</p>
@@ -108,7 +88,6 @@ export default function TrendView({ data }) {
         </div>
       </div>
 
-      {/* Show Estimated Toggle */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowEstimated(v => !v)}
@@ -119,59 +98,12 @@ export default function TrendView({ data }) {
         <span className="text-sm text-slate-600">Mostrar estimado</span>
       </div>
 
-      {/* Chart */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
           <span className="text-sm font-semibold text-slate-700">{selectedName}</span>
         </div>
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
-                axisLine={false}
-                tickLine={false}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                hide
-                tickFormatter={formatARSShort}
-                domain={['auto', 'auto']}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              {avg > 0 && (
-                <ReferenceLine y={avg} stroke="#c7d2fe" strokeDasharray="4 4" />
-              )}
-              <Line
-                type="monotone"
-                dataKey="Real"
-                stroke={color}
-                strokeWidth={2.5}
-                dot={{ r: 3, fill: color, strokeWidth: 0 }}
-                activeDot={{ r: 5 }}
-                connectNulls
-              />
-              {showEstimated && (
-                <Line
-                  type="monotone"
-                  dataKey="Estimado"
-                  stroke="#c7d2fe"
-                  strokeWidth={1.5}
-                  strokeDasharray="5 5"
-                  dot={false}
-                  connectNulls
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-32 flex items-center justify-center">
-            <p className="text-slate-400 text-sm">Sin datos</p>
-          </div>
-        )}
+        <LineChart data={chartData} color={color} showEstimated={showEstimated} />
         <div className="flex gap-4 justify-center mt-2">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 rounded" style={{ backgroundColor: color }} />
@@ -190,7 +122,6 @@ export default function TrendView({ data }) {
         </div>
       </div>
 
-      {/* All monthly values */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
