@@ -66,7 +66,6 @@ function parseAmount(str) {
 function parseMonthHeader(header) {
   if (!header) return null
   const trimmed = header.trim()
-  // Handles both "RealMarzo24" and "Real Marzo 2026" (with or without spaces)
   const match = trimmed.match(
     /^(Real|Estimado?)\s*([A-Za-záéíóúüÁÉÍÓÚÜ]+)\s*(\d{2,4})$/i
   )
@@ -172,7 +171,27 @@ function processData(rows) {
     latestWithReal ||
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
-  return { expenses, months, monthTotals, currentMonthKey: currentKey }
+  // Parse Balanz table: scan col 58 (BG) for "Guardado en Balanz" header
+  const balanzItems = []
+  let balanzHeaderRow = -1
+  for (let i = 0; i < rows.length; i++) {
+    const cell = rows[i]?.[58]?.trim().toLowerCase() || ''
+    if (cell === 'guardado en balanz') { balanzHeaderRow = i; break }
+  }
+  if (balanzHeaderRow >= 0) {
+    for (let i = balanzHeaderRow + 1; i < rows.length; i++) {
+      const label = rows[i]?.[58]?.trim() || ''
+      const amount = parseAmount(rows[i]?.[59])
+      if (!label) break
+      if (/^(total|disponible|sobra)/i.test(label)) continue
+      balanzItems.push({ label, amount })
+    }
+  }
+  const balanz = balanzItems.length
+    ? { items: balanzItems, total: balanzItems.reduce((s, r) => s + (r.amount ?? 0), 0) }
+    : null
+
+  return { expenses, months, monthTotals, currentMonthKey: currentKey, balanz }
 }
 
 export function useExpenseData() {

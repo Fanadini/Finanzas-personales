@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatARS } from '../utils/format'
 import BarChart from './BarChart'
+import BalanzCard from './BalanzCard'
 
 function ChevronLeft() {
   return (
@@ -42,7 +43,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard({ data, onRefresh }) {
-  const { months, monthTotals, expenses, currentMonthKey } = data
+  const { months, monthTotals, expenses, currentMonthKey, balanz } = data
   const initialIdx = Math.max(0, months.findIndex(m => m.key === currentMonthKey))
   const [idx, setIdx] = useState(initialIdx)
   const [sortBy, setSortBy] = useState('real-desc')
@@ -214,6 +215,8 @@ export default function Dashboard({ data, onRefresh }) {
         </h2>
         <BarChart data={chartData} />
       </div>
+
+      <BalanzCard balanz={balanz} />
 
       <button
         onClick={onRefresh}
