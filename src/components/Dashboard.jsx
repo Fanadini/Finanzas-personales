@@ -188,8 +188,7 @@ export default function Dashboard({ data, onRefresh }) {
             const color = !hasComparison
               ? 'text-slate-800'
               : diff > 0 ? 'text-red-500'
-              : diff < 0 ? 'text-green-600'
-              : 'text-slate-800'
+              : 'text-green-600'
 
             return (
               <div key={e.name} className="flex items-center px-4 py-3">
