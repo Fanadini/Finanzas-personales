@@ -111,12 +111,14 @@ export default function MonthView({ data }) {
     return sumB - sumA
   })
 
-  // Category breakdown for bar/% display
-  const categoryBreakdown = sortedCategories.map(([cat, items]) => {
+  // Category breakdown for bar/% display — always show all 12 categories
+  const categoryBreakdown = Object.keys(CATEGORY_COLORS).sort().map(cat => {
+    const items = grouped[cat] ?? []
     const val = items.reduce((s, i) => s + (i.real ?? 0), 0)
+    const est = items.reduce((s, i) => s + (i.estimated ?? 0), 0)
     const pct = totalReal > 0 ? Math.round((val / totalReal) * 100) : 0
-    return { cat, val, pct }
-  }).filter(c => c.val > 0)
+    return { cat, val, est, pct }
+  }).sort((a, b) => b.val - a.val || b.est - a.est)
 
   return (
     <div className="p-4 space-y-4 pb-24">
@@ -159,26 +161,33 @@ export default function MonthView({ data }) {
             Por categoría
           </h2>
           <div className="space-y-2.5">
-            {categoryBreakdown.map(({ cat, val, pct }) => (
-              <div key={cat}>
-                <div className="flex justify-between items-center mb-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] }} />
-                    <span className="text-sm text-slate-600 font-medium">{cat}</span>
+            {categoryBreakdown.map(({ cat, val, est, pct }) => {
+              const hasData = val > 0 || est > 0
+              const display = val > 0 ? formatARS(val) : est > 0 ? `est. ${formatARS(est)}` : '-'
+              const barPct = val > 0 ? pct : 0
+              return (
+                <div key={cat} className={hasData ? '' : 'opacity-40'}>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] }} />
+                      <span className="text-sm text-slate-600 font-medium">{cat}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {val > 0 && <span className="text-xs text-slate-400">{pct}%</span>}
+                      <span className={`text-sm font-semibold ${val > 0 ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {display}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">{pct}%</span>
-                    <span className="text-sm font-semibold text-slate-800">{formatARS(val)}</span>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${barPct}%`, backgroundColor: CATEGORY_COLORS[cat] }}
+                    />
                   </div>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[cat] }}
-                  />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
