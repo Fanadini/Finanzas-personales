@@ -69,8 +69,8 @@ export default function Dashboard({ data, onRefresh }) {
 
   // Sort
   const sorted = [...monthExpenses].sort((a, b) => {
-    if (sortBy === 'real-desc') return (b.real ?? b.estimated ?? 0) - (a.real ?? a.estimated ?? 0)
-    if (sortBy === 'real-asc') return (a.real ?? a.estimated ?? 0) - (b.real ?? b.estimated ?? 0)
+    if (sortBy === 'real-desc') return (b.real ?? 0) - (a.real ?? 0)
+    if (sortBy === 'real-asc') return (a.real ?? 0) - (b.real ?? 0)
     if (sortBy === 'name-asc') return a.name.localeCompare(b.name, 'es')
     if (sortBy === 'name-desc') return b.name.localeCompare(a.name, 'es')
     return 0

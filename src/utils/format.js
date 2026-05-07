@@ -17,30 +17,33 @@ export function formatARSShort(amount) {
 }
 
 export function getCategory(name) {
-  if (!name) return 'Sin categoría'
+  if (!name) return 'Otros'
   const l = name.toLowerCase()
-  if (l.includes('metrogas') || l.includes('edenor')) return 'Servicios'
-  if (l.includes('flow') || l.includes('teléfono') || l.includes('telefono')) return 'Telefonía'
-  if (l.includes('abl') || l.includes('expensa')) return 'Vivienda'
+  if (l === 'amanda' || l.startsWith('amanda')) return 'Amanda'
   if (l.includes('tarjeta')) return 'Tarjetas'
-  if (l.includes('super')) return 'Supermercado'
-  if (l.includes('psicól') || l.includes('psicologo') || l.includes('pilates') || l.includes('gimnasio') || l.includes('amanda')) return 'Salud'
-  if (l.includes('monotributo')) return 'Impuestos'
-  if (l.includes('limpieza')) return 'Hogar'
   if (l.includes('auto') || l.includes('seguro') || l.includes('prevision') || l.includes('patente')) return 'Auto'
+  if (l.includes('expensa') || l.includes('abl') || l.includes('limpieza') || l.includes('alquiler')) return 'Casa'
+  if (l.includes('super') || l.includes('mercado') || l.includes('coto') || l.includes('jumbo') || l.includes('carrefour')) return 'Comida'
+  if (l.includes('psicól') || l.includes('psicologo') || l.includes('pilates') || l.includes('gimnasio') || l.includes('peluquer') || l.includes('farmacia') || l.includes('médico') || l.includes('medico')) return 'Cuidado Personal'
+  if (l.includes('rappi') || l.includes('pedidos') || l.includes('delivery') || l.includes('ifood')) return 'Delivery'
+  if (l.includes('netflix') || l.includes('spotify') || l.includes('flow') || l.includes('youtube') || l.includes('disney') || l.includes('hbo') || l.includes('prime') || l.includes('steam') || l.includes('entretenimiento')) return 'Entretenimiento'
+  if (l.includes('monotributo') || l.includes('afip') || l.includes('impuesto') || l.includes('metrogas') || l.includes('edenor') || l.includes('teléfono') || l.includes('telefono') || l.includes('internet') || l.includes('servicios')) return 'Impuestos y Servicios'
+  if (l.includes('ahorro') || l.includes('inversion') || l.includes('inversión') || l.includes('plazo fijo') || l.includes('dolar') || l.includes('dólar')) return 'Ahorro'
+  if (l.includes('restaurant') || l.includes('bar') || l.includes('salida') || l.includes('cine') || l.includes('teatro') || l.includes('viaje') || l.includes('hotel')) return 'Salidas'
   return 'Otros'
 }
 
 export const CATEGORY_COLORS = {
-  Servicios: '#3b82f6',
-  Telefonía: '#8b5cf6',
-  Vivienda: '#f59e0b',
-  Tarjetas: '#ef4444',
-  Supermercado: '#10b981',
-  Salud: '#06b6d4',
-  Impuestos: '#f97316',
-  Hogar: '#84cc16',
-  Auto: '#6366f1',
-  Otros: '#94a3b8',
-  'Sin categoría': '#cbd5e1',
+  Ahorro:                '#10b981',
+  Amanda:                '#f472b6',
+  Auto:                  '#6366f1',
+  Casa:                  '#f59e0b',
+  Comida:                '#84cc16',
+  'Cuidado Personal':    '#06b6d4',
+  Delivery:              '#fb923c',
+  Entretenimiento:       '#a78bfa',
+  'Impuestos y Servicios': '#3b82f6',
+  Otros:                 '#94a3b8',
+  Salidas:               '#f43f5e',
+  Tarjetas:              '#ef4444',
 }
