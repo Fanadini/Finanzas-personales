@@ -27,10 +27,7 @@ function CategorySection({ category, items }) {
         className="w-full flex items-center justify-between px-4 py-3 active:bg-slate-50"
       >
         <div className="flex items-center gap-2">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: CATEGORY_COLORS[category] }}
-          />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[category] }} />
           <span className="text-sm font-semibold text-slate-700">{category}</span>
           <span className="text-xs text-slate-400">({items.length})</span>
         </div>
@@ -56,8 +53,7 @@ function CategorySection({ category, items }) {
                 <div>
                   <p className={`text-sm font-semibold ${
                     item.estimated != null && item.real != null && item.real > item.estimated
-                      ? 'text-red-500'
-                      : 'text-slate-800'
+                      ? 'text-red-500' : 'text-slate-800'
                   }`}>
                     {item.real != null ? formatARS(item.real) : '-'}
                   </p>
@@ -100,7 +96,6 @@ export default function MonthView({ data }) {
     .filter(e => e.real != null || e.estimated != null)
     .sort((a, b) => (b.real ?? b.estimated ?? 0) - (a.real ?? a.estimated ?? 0))
 
-  // Group by category
   const grouped = {}
   monthExpenses.forEach(e => {
     if (!grouped[e.category]) grouped[e.category] = []
@@ -110,13 +105,18 @@ export default function MonthView({ data }) {
   const totalReal = monthExpenses.reduce((s, e) => s + (e.real ?? 0), 0)
   const totalEst = monthExpenses.reduce((s, e) => s + (e.estimated ?? 0), 0)
 
-  // Category order by total real desc
-  const sortedCategories = Object.entries(grouped)
-    .sort((a, b) => {
-      const sumA = a[1].reduce((s, i) => s + (i.real ?? 0), 0)
-      const sumB = b[1].reduce((s, i) => s + (i.real ?? 0), 0)
-      return sumB - sumA
-    })
+  const sortedCategories = Object.entries(grouped).sort((a, b) => {
+    const sumA = a[1].reduce((s, i) => s + (i.real ?? 0), 0)
+    const sumB = b[1].reduce((s, i) => s + (i.real ?? 0), 0)
+    return sumB - sumA
+  })
+
+  // Category breakdown for bar/% display
+  const categoryBreakdown = sortedCategories.map(([cat, items]) => {
+    const val = items.reduce((s, i) => s + (i.real ?? 0), 0)
+    const pct = totalReal > 0 ? Math.round((val / totalReal) * 100) : 0
+    return { cat, val, pct }
+  }).filter(c => c.val > 0)
 
   return (
     <div className="p-4 space-y-4 pb-24">
@@ -151,6 +151,37 @@ export default function MonthView({ data }) {
           )}
         </div>
       </div>
+
+      {/* Category breakdown with bars */}
+      {categoryBreakdown.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            Por categoría
+          </h2>
+          <div className="space-y-2.5">
+            {categoryBreakdown.map(({ cat, val, pct }) => (
+              <div key={cat}>
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[cat] }} />
+                    <span className="text-sm text-slate-600 font-medium">{cat}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{pct}%</span>
+                    <span className="text-sm font-semibold text-slate-800">{formatARS(val)}</span>
+                  </div>
+                </div>
+                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[cat] }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Category Sections */}
       {sortedCategories.length > 0 ? (

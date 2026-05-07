@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell,
 } from 'recharts'
-import { formatARS, formatARSShort, getCategory, CATEGORY_COLORS } from '../utils/format'
+import { formatARS, formatARSShort } from '../utils/format'
 
 function ChevronLeft() {
   return (
@@ -16,6 +16,16 @@ function ChevronRight() {
   return (
     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5">
       <polyline points="9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function SortIcon({ direction }) {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
+      {direction === 'asc'
+        ? <polyline points="18 15 12 9 6 15" strokeLinecap="round" strokeLinejoin="round" />
+        : <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />}
     </svg>
   )
 }
@@ -38,6 +48,7 @@ export default function Dashboard({ data, onRefresh }) {
   const { months, monthTotals, expenses, currentMonthKey } = data
   const initialIdx = Math.max(0, months.findIndex(m => m.key === currentMonthKey))
   const [idx, setIdx] = useState(initialIdx)
+  const [sortBy, setSortBy] = useState('real-desc') // 'real-desc' | 'real-asc' | 'name-asc' | 'name-desc'
 
   const month = months[idx]
   const totals = monthTotals[month.key]
@@ -47,39 +58,41 @@ export default function Dashboard({ data, onRefresh }) {
       ? Math.round((totals.real / totals.estimated) * 100)
       : null
 
-  // Top expenses for selected month
+  // All expenses for selected month
   const monthExpenses = expenses
     .map(e => ({
       name: e.name,
-      category: getCategory(e.name),
       real: e.monthData[month.key]?.real,
       estimated: e.monthData[month.key]?.estimated,
     }))
     .filter(e => e.real != null || e.estimated != null)
-    .sort((a, b) => (b.real ?? b.estimated ?? 0) - (a.real ?? a.estimated ?? 0))
-    .slice(0, 8)
 
-  // Category breakdown for pie-style bar
-  const byCategory = {}
-  monthExpenses.forEach(e => {
-    if (!byCategory[e.category]) byCategory[e.category] = 0
-    byCategory[e.category] += e.real ?? e.estimated ?? 0
+  // Sort
+  const sorted = [...monthExpenses].sort((a, b) => {
+    if (sortBy === 'real-desc') return (b.real ?? b.estimated ?? 0) - (a.real ?? a.estimated ?? 0)
+    if (sortBy === 'real-asc') return (a.real ?? a.estimated ?? 0) - (b.real ?? b.estimated ?? 0)
+    if (sortBy === 'name-asc') return a.name.localeCompare(b.name, 'es')
+    if (sortBy === 'name-desc') return b.name.localeCompare(a.name, 'es')
+    return 0
   })
-  const categoryData = Object.entries(byCategory)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, value]) => ({ name, value }))
 
   // Last 6 months chart
   const chartMonths = months.slice(Math.max(0, idx - 5), idx + 1)
   const chartData = chartMonths.map(m => {
     const t = monthTotals[m.key]
-    const shortLabel = m.label.split(' ')[0].substring(0, 3)
     return {
-      name: shortLabel,
+      name: m.label.split(' ')[0].substring(0, 3),
       Estimado: t?.estimated ?? 0,
       Real: t?.real ?? 0,
     }
   })
+
+  const cycleSortAmount = () => {
+    setSortBy(s => s === 'real-desc' ? 'real-asc' : 'real-desc')
+  }
+  const cycleSortName = () => {
+    setSortBy(s => s === 'name-asc' ? 'name-desc' : 'name-asc')
+  }
 
   return (
     <div className="p-4 space-y-4 pb-24">
@@ -137,69 +150,59 @@ export default function Dashboard({ data, onRefresh }) {
         )}
       </div>
 
-      {/* Top Expenses */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-          Principales gastos
-        </h2>
-        <div className="space-y-2.5">
-          {monthExpenses.map((e, i) => (
-            <div key={e.name} className="flex items-center gap-2">
-              <span className="text-xs text-slate-300 w-4 flex-shrink-0">{i + 1}</span>
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: CATEGORY_COLORS[e.category] }}
-              />
-              <span className="text-sm text-slate-600 flex-1 truncate">{e.name}</span>
+      {/* Expense List */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* Header with sort controls */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Servicios ({sorted.length})
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={cycleSortName}
+              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                sortBy.startsWith('name') ? 'bg-indigo-50 text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              A-Z
+              {sortBy.startsWith('name') && <SortIcon direction={sortBy === 'name-asc' ? 'asc' : 'desc'} />}
+            </button>
+            <button
+              onClick={cycleSortAmount}
+              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                sortBy.startsWith('real') ? 'bg-indigo-50 text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              $
+              {sortBy.startsWith('real') && <SortIcon direction={sortBy === 'real-asc' ? 'asc' : 'desc'} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y divide-slate-50">
+          {sorted.map(e => (
+            <div key={e.name} className="flex items-center px-4 py-3">
+              <span className="text-sm text-slate-700 flex-1 truncate pr-3">{e.name}</span>
               <div className="text-right flex-shrink-0">
-                <span className={`text-sm font-semibold ${
+                <p className={`text-sm font-semibold ${
                   e.estimated != null && e.real != null && e.real > e.estimated
                     ? 'text-red-500'
                     : 'text-slate-800'
                 }`}>
-                  {e.real != null ? formatARS(e.real) : formatARS(e.estimated)}
-                </span>
-                {e.estimated != null && e.real != null && (
-                  <span className={`text-xs ml-1 ${e.real > e.estimated ? 'text-red-400' : 'text-green-500'}`}>
-                    {e.real > e.estimated ? '▲' : '▼'}
-                  </span>
-                )}
+                  {e.real != null ? formatARS(e.real) : '-'}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {e.estimated != null ? `est. ${formatARS(e.estimated)}` : 'sin estimado'}
+                </p>
               </div>
             </div>
           ))}
-          {monthExpenses.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-4">Sin datos para este mes</p>
+          {sorted.length === 0 && (
+            <p className="text-sm text-slate-400 text-center py-8">Sin datos para este mes</p>
           )}
         </div>
       </div>
-
-      {/* Category Breakdown */}
-      {categoryData.length > 0 && (
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            Por categoría
-          </h2>
-          <div className="space-y-2">
-            {categoryData.map(({ name, value }) => {
-              const pct = totals?.real ? Math.round((value / totals.real) * 100) : 0
-              return (
-                <div key={name}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-600 font-medium">{name}</span>
-                    <span className="text-slate-500">{formatARS(value)} ({pct}%)</span>
-                  </div>
-                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, backgroundColor: CATEGORY_COLORS[name] }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
 
       {/* History Chart */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
@@ -215,10 +218,7 @@ export default function Dashboard({ data, onRefresh }) {
             <Bar dataKey="Estimado" fill="#e0e7ff" radius={[3, 3, 0, 0]} />
             <Bar dataKey="Real" fill="#6366f1" radius={[3, 3, 0, 0]}>
               {chartData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.Real > entry.Estimado ? '#f43f5e' : '#6366f1'}
-                />
+                <Cell key={i} fill={entry.Real > entry.Estimado && entry.Estimado > 0 ? '#f43f5e' : '#6366f1'} />
               ))}
             </Bar>
           </BarChart>
@@ -235,7 +235,6 @@ export default function Dashboard({ data, onRefresh }) {
         </div>
       </div>
 
-      {/* Refresh */}
       <button
         onClick={onRefresh}
         className="w-full py-3 text-sm text-slate-400 hover:text-indigo-600 transition-colors"
