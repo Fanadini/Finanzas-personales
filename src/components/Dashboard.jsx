@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
-} from 'recharts'
-import { formatARS, formatARSShort } from '../utils/format'
+import { formatARS } from '../utils/format'
+import BarChart from './BarChart'
 
 function ChevronLeft() {
   return (
@@ -48,7 +45,7 @@ export default function Dashboard({ data, onRefresh }) {
   const { months, monthTotals, expenses, currentMonthKey } = data
   const initialIdx = Math.max(0, months.findIndex(m => m.key === currentMonthKey))
   const [idx, setIdx] = useState(initialIdx)
-  const [sortBy, setSortBy] = useState('real-desc') // 'real-desc' | 'real-asc' | 'name-asc' | 'name-desc'
+  const [sortBy, setSortBy] = useState('real-desc')
 
   const month = months[idx]
   const totals = monthTotals[month.key]
@@ -58,7 +55,6 @@ export default function Dashboard({ data, onRefresh }) {
       ? Math.round((totals.real / totals.estimated) * 100)
       : null
 
-  // All expenses for selected month
   const monthExpenses = expenses
     .map(e => ({
       name: e.name,
@@ -67,7 +63,6 @@ export default function Dashboard({ data, onRefresh }) {
     }))
     .filter(e => e.real != null || e.estimated != null)
 
-  // Sort
   const sorted = [...monthExpenses].sort((a, b) => {
     if (sortBy === 'real-desc') return (b.real ?? 0) - (a.real ?? 0)
     if (sortBy === 'real-asc') return (a.real ?? 0) - (b.real ?? 0)
@@ -76,7 +71,6 @@ export default function Dashboard({ data, onRefresh }) {
     return 0
   })
 
-  // Last 6 months chart
   const chartMonths = months.slice(Math.max(0, idx - 5), idx + 1)
   const chartData = chartMonths.map(m => {
     const t = monthTotals[m.key]
@@ -96,7 +90,6 @@ export default function Dashboard({ data, onRefresh }) {
 
   return (
     <div className="p-4 space-y-4 pb-24">
-      {/* Month Navigator */}
       <div className="flex items-center justify-between pt-2">
         <button
           onClick={() => setIdx(i => Math.max(0, i - 1))}
@@ -118,7 +111,6 @@ export default function Dashboard({ data, onRefresh }) {
         </button>
       </div>
 
-      {/* Hero Card */}
       <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
         <p className="text-indigo-200 text-sm mb-1">Total Real</p>
         <p className="text-4xl font-bold mb-4">
@@ -150,9 +142,7 @@ export default function Dashboard({ data, onRefresh }) {
         )}
       </div>
 
-      {/* Expense List */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {/* Header with sort controls */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Servicios ({sorted.length})
@@ -179,7 +169,6 @@ export default function Dashboard({ data, onRefresh }) {
           </div>
         </div>
 
-        {/* Rows */}
         <div className="divide-y divide-slate-50">
           {sorted.map(e => {
             const hasComparison = e.real != null && e.estimated != null && e.estimated !== 0
@@ -219,35 +208,11 @@ export default function Dashboard({ data, onRefresh }) {
         </div>
       </div>
 
-      {/* History Chart */}
       <div className="bg-white rounded-2xl p-4 shadow-sm">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
           Últimos meses
         </h2>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-            <YAxis hide tickFormatter={formatARSShort} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="Estimado" fill="#e0e7ff" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="Real" fill="#6366f1" radius={[3, 3, 0, 0]}>
-              {chartData.map((entry, i) => (
-                <Cell key={i} fill={entry.Real > entry.Estimado && entry.Estimado > 0 ? '#f43f5e' : '#6366f1'} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <div className="flex gap-4 justify-center mt-2">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-indigo-200" />
-            <span className="text-xs text-slate-500">Estimado</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-indigo-500" />
-            <span className="text-xs text-slate-500">Real</span>
-          </div>
-        </div>
+        <BarChart data={chartData} />
       </div>
 
       <button
