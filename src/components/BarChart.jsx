@@ -10,30 +10,31 @@ export default function BarChart({ data }) {
   }
 
   const maxVal = Math.max(...data.map(d => Math.max(d.Estimado ?? 0, d.Real ?? 0)))
+  const BAR_H = 112
 
   return (
     <div>
       <div className="flex items-end gap-1.5 h-36">
         {data.map((d, i) => {
-          const estH = d.Estimado ? Math.round((d.Estimado / maxVal) * 100) : 0
-          const realH = d.Real ? Math.round((d.Real / maxVal) * 100) : 0
+          const estPx = d.Estimado ? Math.round((d.Estimado / maxVal) * BAR_H) : 0
+          const realPx = d.Real ? Math.round((d.Real / maxVal) * BAR_H) : 0
           const over = (d.Real ?? 0) > (d.Estimado ?? 0) && (d.Estimado ?? 0) > 0
           return (
             <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-              <div className="w-full flex items-end gap-0.5 h-28">
-                <div className="flex-1 flex flex-col justify-end">
-                  {estH > 0 && (
+              <div className="w-full flex items-end gap-0.5" style={{ height: BAR_H }}>
+                <div className="flex-1 flex flex-col justify-end" style={{ height: BAR_H }}>
+                  {estPx > 0 && (
                     <div
                       className="w-full rounded-t bg-gold-100"
-                      style={{ height: `${estH}%` }}
+                      style={{ height: estPx }}
                     />
                   )}
                 </div>
-                <div className="flex-1 flex flex-col justify-end">
-                  {realH > 0 && (
+                <div className="flex-1 flex flex-col justify-end" style={{ height: BAR_H }}>
+                  {realPx > 0 && (
                     <div
                       className={`w-full rounded-t ${over ? 'bg-gold-400' : 'bg-olive-500'}`}
-                      style={{ height: `${realH}%` }}
+                      style={{ height: realPx }}
                     />
                   )}
                 </div>
