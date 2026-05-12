@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { formatARS, getCategory, CATEGORY_COLORS } from '../utils/format'
+import { formatARS, formatARSShort, getCategory, CATEGORY_COLORS } from '../utils/format'
 import BarChart from './BarChart'
-import BalanzCard from './BalanzCard'
-import SankeyChart from './SankeyChart'
 
 function ChevronLeft() {
   return (
@@ -29,23 +27,54 @@ function SortIcon({ direction }) {
   )
 }
 
+function CategoryBars({ categories }) {
+  if (!categories.length) return null
+  const max = Math.max(...categories.map(c => c.value))
+  const total = categories.reduce((s, c) => s + c.value, 0)
+  return (
+    <div className="space-y-2.5">
+      {categories.map(c => {
+        const pct = Math.round((c.value / total) * 100)
+        const barW = (c.value / max) * 100
+        return (
+          <div key={c.name}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+                <span className="text-xs text-olive-700 truncate">{c.name}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span className="text-xs text-warm-400">{pct}%</span>
+                <span className="text-xs font-semibold text-olive-800 tabular-nums">{formatARSShort(c.value)}</span>
+              </div>
+            </div>
+            <div className="h-1.5 bg-warm-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${barW}%`, backgroundColor: c.color }} />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function BulletBar({ real, estimated }) {
   if (real == null || estimated == null || estimated === 0) return null
   const pct = (real / estimated) * 100
   const over = pct > 100
   return (
-    <div className="relative mt-1.5 h-1 rounded-full bg-warm-100" style={{ width: 72 }}>
+    <div className="relative mt-1.5 h-1 w-full rounded-full bg-warm-100">
       <div
         className={`absolute inset-y-0 left-0 h-full rounded-full ${over ? 'bg-gold-400' : 'bg-olive-400'}`}
         style={{ width: `${Math.min(pct, 100)}%` }}
       />
-      <div className="absolute inset-y-[-1px] w-px bg-warm-300" style={{ right: 0 }} />
+      <div className="absolute inset-y-[-1px] right-0 w-px bg-warm-300" />
     </div>
   )
 }
 
 export default function Dashboard({ data, onRefresh }) {
-  const { months, monthTotals, expenses, currentMonthKey, balanz } = data
+  const { months, monthTotals, expenses, currentMonthKey } = data
   const initialIdx = Math.max(0, months.findIndex(m => m.key === currentMonthKey))
   const [idx, setIdx] = useState(initialIdx)
   const [sortBy, setSortBy] = useState('real-desc')
@@ -154,11 +183,11 @@ export default function Dashboard({ data, onRefresh }) {
       </div>
 
       {sankeyData.length > 0 && (
-        <div className="bg-white rounded-2xl px-4 pt-4 pb-2 shadow-sm">
-          <h2 className="text-xs font-semibold text-warm-400 uppercase tracking-wider mb-1">
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="text-xs font-semibold text-warm-400 uppercase tracking-wider mb-3">
             Distribución por categoría
           </h2>
-          <SankeyChart categories={sankeyData} />
+          <CategoryBars categories={sankeyData} />
         </div>
       )}
 
@@ -237,8 +266,6 @@ export default function Dashboard({ data, onRefresh }) {
           <BarChart data={chartData} />
         </div>
       )}
-
-      <BalanzCard balanz={balanz} expenses={expenses} months={months} />
 
       <button
         onClick={onRefresh}
