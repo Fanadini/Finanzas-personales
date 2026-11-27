@@ -5,9 +5,18 @@ on:
     branches:
       - claude/expense-tracker-app-2ofla
       - main
+  schedule:
+    # Cada 15 min en horario de mercado de EE. UU. (13:30–21:00 UTC, lun–vie) + cierre
+    - cron: '*/15 13-20 * * 1-5'
+    - cron: '20 21 * * 1-5'
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -25,6 +34,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Scan S&P 500 (order blocks / liquidez)
+        run: node scripts/scan.mjs dist/data
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

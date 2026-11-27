@@ -26,10 +26,20 @@ function IconTrend({ active }) {
   )
 }
 
+function IconMarket() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="6" y1="3" x2="6" y2="21" strokeLinecap="round" /><rect x="4" y="7" width="4" height="8" rx="1" />
+      <line x1="17" y1="3" x2="17" y2="21" strokeLinecap="round" /><rect x="15" y="10" width="4" height="6" rx="1" />
+    </svg>
+  )
+}
+
 const TABS = [
   { label: 'Inicio', Icon: IconHome },
   { label: 'Por Mes', Icon: IconCalendar },
   { label: 'Tendencias', Icon: IconTrend },
+  { label: 'Mercado', Icon: IconMarket },
 ]
 
 export default function NavBar({ activeTab, onTabChange }) {
