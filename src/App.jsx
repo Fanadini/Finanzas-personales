@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard'
 import MonthView from './components/MonthView'
 import TrendView from './components/TrendView'
 import NavBar from './components/NavBar'
+import MarketView from './market/MarketView'
 
 function LoadingScreen() {
   return (
@@ -47,6 +48,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(0)
   const { data, loading, error, refresh } = useExpenseData()
 
+  if (activeTab === 3) {
+    return (
+      <div className="min-h-screen bg-warm-50">
+        <MarketView />
+        <NavBar activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+    )
+  }
   if (loading) return <LoadingScreen />
   if (error) return <ErrorScreen message={error} onRetry={refresh} />
 
